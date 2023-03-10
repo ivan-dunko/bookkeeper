@@ -111,7 +111,25 @@ class SqliteRepository(AbstractRepository[T]):
     def update(self, obj: T) -> None:
         if obj.pk == 0:
             raise ValueError('attempt to update object with unknown primary key')
-        self._container[obj.pk] = obj
+
+        #col_set = ','.join([attr+'='+str(getattr(obj, attr)) for attr in obj.__annotations__])
+        col_set = repr(obj).split('(')[1].split(')')[0]
+        #print(col_set)
+        cmd = f'update {self._table_name} set {col_set} where pk={obj.pk}'
+        #print(cmd)
+        cur = self._conn.cursor()
+        try:
+            cur.execute(cmd)
+            self._conn.commit()
+        finally:
+            cur.close()
 
     def delete(self, pk: int) -> None:
-        self._container.pop(pk)
+        cur = self._conn.cursor()
+        cmd = f'delete from {self._table_name} where pk={pk}'
+        #print(cmd)
+        try:
+            cur.execute(cmd)
+            self._conn.commit()
+        finally:
+            cur.close()
