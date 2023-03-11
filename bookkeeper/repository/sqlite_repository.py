@@ -8,6 +8,7 @@ from typing import Any
 from typing import Type
 from typing import Optional
 import sqlite3
+import copy
 
 from bookkeeper.repository.abstract_repository import AbstractRepository, T
 
@@ -34,7 +35,10 @@ class SqliteRepository(AbstractRepository[T]):
         self._table_name = class_used.__name__
         self._class_used = class_used
         if db_name is not None:
-            self._db_name = db_name + '.db'
+            if db_name != ':memory:':
+                self._db_name = db_name + '.db'
+            else:
+                self._db_name = db_name
         else:
             self._db_name = class_used.__name__ + '.db'
         print(self._db_name)
@@ -64,9 +68,8 @@ class SqliteRepository(AbstractRepository[T]):
         finally:
             if cur is not None:
                 cur.close()
-            if self._conn is not None:
-                self._conn.close()
-                self._conn = None
+            # self._conn is closed in
+            # __del__ after finally completed
 
     def __del__(self) -> None:
         if self._conn is not None:
@@ -80,18 +83,16 @@ class SqliteRepository(AbstractRepository[T]):
         assert self._conn is not None
 
         cur = self._conn.cursor()
-        q_marks = ','.join(['?']*len(self._class_used.__annotations__))
+        q_marks = ','.join(['?'] * len(self._class_used.__annotations__))
         print(q_marks)
         cmd = f'insert into {self._table_name} values({q_marks})'
         print(cmd)
-        old_pk = obj.pk
+        tmp_obj = copy.deepcopy(obj)
+        tmp_obj.pk = pk
         try:
-            obj.pk = pk
-            cur.execute(cmd, dataclasses.astuple(obj))
+            cur.execute(cmd, dataclasses.astuple(tmp_obj))
             self._conn.commit()
-        except sqlite3.DatabaseError:
-            obj.pk = old_pk
-            raise
+            obj.pk = pk
         finally:
             cur.close()
 
@@ -116,10 +117,18 @@ class SqliteRepository(AbstractRepository[T]):
     def get_all(self, where: dict[str, Any] | None = None) -> list[T]:
         assert self._conn is not None
 
+        cmd = f'select * from {self._table_name}'
+        if where is not None:
+            cmd = cmd + ' where ' + ' and '.join([item[0] + '=' +
+                                                  ('\'' + item[1] + '\''
+                                                   if isinstance(item[1], str)
+                                                   else str(item[1]))
+                                                  for item in where.items()])
+
+        print(cmd)
         cur = self._conn.cursor()
         try:
-            return [self._class_used(*i) for i in cur.execute(
-                f'select * from {self._table_name}').fetchall()]
+            return [self._class_used(*i) for i in cur.execute(cmd).fetchall()]
         finally:
             cur.close()
 
