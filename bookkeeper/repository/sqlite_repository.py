@@ -31,31 +31,24 @@ class SqliteRepository(AbstractRepository[T]):
     # Since it's impossible to get actual type of generic
     # from within instance 'class_used' argument is used
     # to get fields of corresponding dataclass
-    def __init__(self, class_used: Type[T], db_name: str | None = None) -> None:
+    def __init__(self, class_used: Type[T], db_name: str) -> None:
         self._table_name = class_used.__name__
         self._class_used = class_used
-        if db_name is not None:
-            if db_name != ':memory:':
-                self._db_name = db_name + '.db'
-            else:
-                self._db_name = db_name
-        else:
-            self._db_name = class_used.__name__ + '.db'
+       
+        self._db_name = db_name + '.db'
         print(self._db_name)
         # since connect doesn't raise exception
         # no need to use try-except
         # self._conn: Optional[sqlite3.Connection] = sqlite3.connect(self._db_name)
-        self._conn: Optional[sqlite3.Connection] = None
+        # self._conn: Optional[sqlite3.Connection] = None
 
         cmd = f'create table if not exists {self._table_name}' \
               f'({SqliteRepository.get_fields_as_string(class_used)})'
         print(cmd)
 
         # get fields to create table
-        cur = None
-        try:
-            self._conn = sqlite3.connect(self._db_name)
-            cur = self._conn.cursor()
+        with sqlite3.connect(self._db_name) as conn:
+            cur = conn.cursor()
             cur.execute(cmd)
 
             # get maximum primary key value from table
@@ -65,58 +58,50 @@ class SqliteRepository(AbstractRepository[T]):
                 self._counter = count(1)
             else:
                 self._counter = count(max_pk[0] + 1)
-        finally:
-            if cur is not None:
-                cur.close()
+        cur.close()
             # self._conn is closed in
             # __del__ after finally completed
 
+    """
     def __del__(self) -> None:
         if self._conn is not None:
             self._conn.close()
+    """
 
     def add(self, obj: T) -> int:
         if getattr(obj, 'pk', None) != 0:
             raise ValueError(f'trying to add object {obj} with filled `pk` attribute')
         pk = next(self._counter)
 
-        assert self._conn is not None
-
-        cur = self._conn.cursor()
-        q_marks = ','.join(['?'] * len(self._class_used.__annotations__))
-        print(q_marks)
-        cmd = f'insert into {self._table_name} values({q_marks})'
-        print(cmd)
-        tmp_obj = copy.deepcopy(obj)
-        tmp_obj.pk = pk
-        try:
+        with sqlite3.connect(self._db_name) as conn:
+            cur = conn.cursor()
+            q_marks = ','.join(['?'] * len(self._class_used.__annotations__))
+            print(q_marks)
+            cmd = f'insert into {self._table_name} values({q_marks})'
+            print(cmd)
+            tmp_obj = copy.deepcopy(obj)
+            tmp_obj.pk = pk
             cur.execute(cmd, dataclasses.astuple(tmp_obj))
-            self._conn.commit()
+            conn.commit()
             obj.pk = pk
-        finally:
-            cur.close()
+        cur.close()
 
         # obj.pk = pk
         return pk
 
     def get(self, pk: int) -> T | None:
-        assert self._conn is not None
-
-        cur = self._conn.cursor()
-        cmd = f'select * from {self._table_name} where pk={pk}'
-        print(cmd)
-        try:
+        with sqlite3.connect(self._db_name) as conn:
+            cur = conn.cursor()
+            cmd = f'select * from {self._table_name} where pk={pk}'
+            print(cmd)
             res = cur.execute(cmd).fetchone()
-        finally:
-            cur.close()
+        cur.close()
 
         if res is None:
             return None
         return self._class_used(*res)
 
     def get_all(self, where: dict[str, Any] | None = None) -> list[T]:
-        assert self._conn is not None
-
         cmd = f'select * from {self._table_name}'
         if where is not None:
             cmd = cmd + ' where ' + ' and '.join([item[0] + '=' +
@@ -126,11 +111,11 @@ class SqliteRepository(AbstractRepository[T]):
                                                   for item in where.items()])
 
         print(cmd)
-        cur = self._conn.cursor()
-        try:
-            return [self._class_used(*i) for i in cur.execute(cmd).fetchall()]
-        finally:
-            cur.close()
+        with sqlite3.connect(self._db_name) as conn:
+            cur = conn.cursor()
+            res = [self._class_used(*i) for i in cur.execute(cmd).fetchall()]
+        cur.close()
+        return res
 
     def update(self, obj: T) -> None:
         if obj.pk == 0:
@@ -143,23 +128,17 @@ class SqliteRepository(AbstractRepository[T]):
         cmd = f'update {self._table_name} set {col_set} where pk={obj.pk}'
         # print(cmd)
 
-        assert self._conn is not None
-
-        cur = self._conn.cursor()
-        try:
+        with sqlite3.connect(self._db_name) as conn:
+            cur = conn.cursor()
             cur.execute(cmd)
-            self._conn.commit()
-        finally:
-            cur.close()
+            conn.commit()
+        cur.close()
 
     def delete(self, pk: int) -> None:
-        assert self._conn is not None
-
-        cur = self._conn.cursor()
         cmd = f'delete from {self._table_name} where pk={pk}'
         # print(cmd)
-        try:
+        with sqlite3.connect(self._db_name) as conn:
+            cur = conn.cursor()
             cur.execute(cmd)
-            self._conn.commit()
-        finally:
-            cur.close()
+            conn.commit()
+        cur.close()

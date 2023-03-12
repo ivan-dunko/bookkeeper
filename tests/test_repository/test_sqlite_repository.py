@@ -16,9 +16,10 @@ def custom_class():
 
 @pytest.fixture
 def repo(custom_class):
-    return SqliteRepository(custom_class().__class__, db_name=':memory:')
+    return SqliteRepository(custom_class().__class__, db_name='test_db')
 
 
+"""
 def test_init_name_db(custom_class):
     repo = SqliteRepository[custom_class().__class__](custom_class().__class__)
     del repo
@@ -31,6 +32,7 @@ def test_init_name_db(custom_class):
     repo = SqliteRepository[custom_class().__class__](custom_class().__class__, db_name='A')
     del repo
     os.remove('A.db')
+"""
 
 
 def test_get_fields_as_string(repo, custom_class):
@@ -89,3 +91,9 @@ def test_get_all_with_condition(repo, custom_class):
         objects.append(o)
     assert repo.get_all({'name': '0'}) == [objects[0]]
     #assert repo.get_all({'test': 'test'}) == objects
+
+"""
+def test_remove(repo):
+    del repo
+    os.remove('test_db.db')
+"""
