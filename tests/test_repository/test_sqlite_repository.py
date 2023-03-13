@@ -4,6 +4,8 @@ import pytest
 import os
 from dataclasses import dataclass
 
+os.remove('test_db.db')
+
 @pytest.fixture
 def custom_class():
     @dataclass
@@ -91,9 +93,3 @@ def test_get_all_with_condition(repo, custom_class):
         objects.append(o)
     assert repo.get_all({'name': '0'}) == [objects[0]]
     #assert repo.get_all({'test': 'test'}) == objects
-
-"""
-def test_remove(repo):
-    del repo
-    os.remove('test_db.db')
-"""

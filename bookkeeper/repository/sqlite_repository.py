@@ -34,7 +34,7 @@ class SqliteRepository(AbstractRepository[T]):
     def __init__(self, class_used: Type[T], db_name: str) -> None:
         self._table_name = class_used.__name__
         self._class_used = class_used
-       
+
         self._db_name = db_name + '.db'
         print(self._db_name)
         # since connect doesn't raise exception
@@ -81,6 +81,7 @@ class SqliteRepository(AbstractRepository[T]):
             print(cmd)
             tmp_obj = copy.deepcopy(obj)
             tmp_obj.pk = pk
+            print(dataclasses.astuple(tmp_obj))
             cur.execute(cmd, dataclasses.astuple(tmp_obj))
             conn.commit()
             obj.pk = pk
@@ -126,7 +127,7 @@ class SqliteRepository(AbstractRepository[T]):
         col_set = repr(obj).split('(')[1].split(')')[0]
         # print(col_set)
         cmd = f'update {self._table_name} set {col_set} where pk={obj.pk}'
-        # print(cmd)
+        print(cmd)
 
         with sqlite3.connect(self._db_name) as conn:
             cur = conn.cursor()
