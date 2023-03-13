@@ -322,7 +322,7 @@ class GUIView:
         item.setFlags(QtCore.Qt.ItemIsEnabled)  # type: ignore[attr-defined]
         self._budget_table.setItem(row, 1, item)
 
-        item = QtWidgets.QTableWidgetItem(budget.budget)
+        item = QtWidgets.QTableWidgetItem(str(budget.budget))
         item.setFlags(QtCore.Qt.ItemIsEnabled)  # type: ignore[attr-defined]
         self._budget_table.setItem(row, 2, item)
 
