@@ -8,34 +8,17 @@ class BudgetTable(QtWidgets.QTableWidget):
     def __init__(self, rows: int, cols: int, presenter: Presenter) -> None:
         super().__init__(rows, cols)
         self._presenter = presenter
-        """
-        self.setHorizontalHeaderLabels(
-            "Срок Сумма Бюджет".split())
-
-        self.horizontalHeader().setSectionResizeMode(
-            0, QtWidgets.QHeaderView.ResizeMode.ResizeToContents)
-        
-        self.horizontalHeader().setSectionResizeMode(
-            1, QtWidgets.QHeaderView.ResizeMode.ResizeToContents)
-        self.horizontalHeader().setSectionResizeMode(
-            2, QtWidgets.QHeaderView.ResizeMode.Stretch)
-        
-        self.itemChanged.connect(self.item_changed)
-
-        for budget in presenter.get_all_budgets():
-            self.add_row(budget)
-        """
 
     def add_row(self, budget: Budget) -> None:
         self.blockSignals(True)
         row = self.rowCount()
         self.insertRow(row)
         item = QtWidgets.QTableWidgetItem(budget.term)
-        item.setFlags(QtCore.Qt.ItemIsEnabled)
+        item.setFlags(QtCore.Qt.ItemIsEnabled)  # type: ignore[attr-defined]
         self.setItem(row, 0, item)
 
         item = QtWidgets.QTableWidgetItem(str(budget.cur_sum))
-        item.setFlags(QtCore.Qt.ItemIsEnabled)
+        item.setFlags(QtCore.Qt.ItemIsEnabled)  # type: ignore[attr-defined]
         self.setItem(row, 1, item)
 
         item = QtWidgets.QTableWidgetItem(str(budget.budget))
@@ -43,7 +26,7 @@ class BudgetTable(QtWidgets.QTableWidget):
         self.setItem(row, 2, item)
         self.blockSignals(False)
 
-    def refresh(self):
+    def refresh(self) -> None:
         self.clearContents()
         self.setRowCount(0)
         for bud in self._presenter.get_all_budgets():

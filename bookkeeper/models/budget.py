@@ -14,6 +14,3 @@ class Budget:
     cur_sum: int = 0
     term: str = '-'
     pk: int = 0
-
-    def add_expense(self, cost):
-        self.cur_sum += cost

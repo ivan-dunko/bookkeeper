@@ -6,7 +6,6 @@ import dataclasses
 from itertools import count
 from typing import Any
 from typing import Type
-from typing import Optional
 import sqlite3
 import copy
 
@@ -59,14 +58,6 @@ class SqliteRepository(AbstractRepository[T]):
             else:
                 self._counter = count(max_pk[0] + 1)
         cur.close()
-            # self._conn is closed in
-            # __del__ after finally completed
-
-    """
-    def __del__(self) -> None:
-        if self._conn is not None:
-            self._conn.close()
-    """
 
     def add(self, obj: T) -> int:
         if getattr(obj, 'pk', None) != 0:
