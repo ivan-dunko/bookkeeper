@@ -43,6 +43,12 @@ class BudgetTable(QtWidgets.QTableWidget):
         self.setItem(row, 2, item)
         self.blockSignals(False)
 
+    def refresh(self):
+        self.clearContents()
+        self.setRowCount(0)
+        for bud in self._presenter.get_all_budgets():
+            self.add_row(bud)
+
     def cell_changed(self, row: int, col: int) -> None:
         item = self.item(row, col)
         pk = row + 1

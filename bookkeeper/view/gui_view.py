@@ -73,6 +73,77 @@ class EditCategoryDialog(QtWidgets.QDialog):
         return self._res_obj
 
 
+class ExpenseDialog(QtWidgets.QDialog):
+    def __init__(self, cat_list: list[Category], to_edit: Expense | None = None) -> None:
+        super().__init__()
+
+        self._to_edit = to_edit
+        if to_edit is not None:
+            self.setWindowTitle('Редактировать расходы')
+        else:
+            self.setWindowTitle('Новые расходы')
+
+        buttons = QtWidgets.QDialogButtonBox.StandardButton.Ok \
+                  | QtWidgets.QDialogButtonBox.StandardButton.Cancel
+
+        self.buttonBox = QtWidgets.QDialogButtonBox(buttons)
+        self.buttonBox.accepted.connect(self.accept)
+        self.buttonBox.rejected.connect(self.reject)
+
+        self.layout = QtWidgets.QVBoxLayout()
+        # message = QtWidgets.QLabel("Something happened, is that OK?")
+        sum_label = QtWidgets.QLabel('Сумма')
+        self._sum_line = QtWidgets.QLineEdit()
+        name_layout = QtWidgets.QHBoxLayout()
+        name_layout.addWidget(sum_label)
+        name_layout.addWidget(self._sum_line)
+
+        cat_label = QtWidgets.QLabel('Категория')
+        self._cat_combo_box = QtWidgets.QComboBox()
+        for cat in cat_list:
+            self._cat_combo_box.addItem(cat.name, userData=cat)
+        cat_layout = QtWidgets.QHBoxLayout()
+        cat_layout.addWidget(cat_label)
+        cat_layout.addWidget(self._cat_combo_box)
+
+        comment_label = QtWidgets.QLabel('Комментарий')
+        self._comment_line = QtWidgets.QLineEdit()
+        comment_layout = QtWidgets.QHBoxLayout()
+        comment_layout.addWidget(comment_label)
+        comment_layout.addWidget(self._comment_line)
+
+        self.layout.addLayout(name_layout)
+        self.layout.addLayout(cat_layout)
+        self.layout.addLayout(comment_layout)
+        # self.layout.addWidget(message)
+        self.layout.addWidget(self.buttonBox)
+        self.setLayout(self.layout)
+
+        self._res_obj = None
+
+    def accept(self) -> None:
+        # print('OK')
+        new_sum = int(self._sum_line.text())
+        new_cat = self._cat_combo_box.itemData(
+            self._cat_combo_box.currentIndex()).pk
+        new_comment = self._comment_line.text()
+        if self._to_edit is not None:
+            self._to_edit.amount = new_sum
+            self._to_edit.category = new_cat
+            self._to_edit.comment = new_comment
+            self._res_obj = self._to_edit
+        else:
+            self._res_obj = Expense(amount=new_sum, category=new_cat, comment=new_comment)
+        self.done(QtWidgets.QDialog.DialogCode.Accepted)
+
+    def reject(self) -> None:
+        print('Reject')
+        #return 0
+        self.done(QtWidgets.QDialog.DialogCode.Rejected)
+
+    def get_res_obj(self) -> Expense | None:
+        return self._res_obj
+
 
 class GUIView:
     """
@@ -146,6 +217,7 @@ class GUIView:
         self._hor_layout2.addWidget(self._del_cat_button)
 
         self._add_exp_button = QtWidgets.QPushButton('Добавить')
+        self._add_exp_button.clicked.connect(self.add_expense)
 
         self._vertical_layout = QtWidgets.QVBoxLayout()
         self._vertical_layout.addWidget(recent_expenses_label)
@@ -225,7 +297,7 @@ class GUIView:
         item.setFlags(QtCore.Qt.ItemIsEnabled)
         self._expenses_table.setItem(row, 2, item)
 
-        item = QtWidgets.QTableWidgetItem(cat.name)
+        item = QtWidgets.QTableWidgetItem(exp.comment)
         item.setFlags(QtCore.Qt.ItemIsEnabled)
         self._expenses_table.setItem(row, 3, item)
 
@@ -244,6 +316,20 @@ class GUIView:
         item.setFlags(QtCore.Qt.ItemIsEnabled)
         self._expenses_table.setItem(row, 2, item)
 
+    def add_expense(self):
+        dialog = ExpenseDialog(self._presenter.get_all_categories())
+        dial_res = dialog.exec()
+        if dial_res == QtWidgets.QDialog.DialogCode.Accepted:
+            new_exp = dialog.get_res_obj()
+            print('new_exp', new_exp)
+            self._presenter.add_expense(new_exp)
+            self._expenses_table.clearContents()
+            self._expenses_table.setRowCount(0)
+            for exp in self._presenter.get_all_expenses():
+                self.add_to_expenses_table(exp)
+
+            # update budgets
+            self._budget_table.refresh()
 
 # GUIView().get_app().exec()
 """
