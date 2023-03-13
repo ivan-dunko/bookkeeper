@@ -14,7 +14,8 @@ from bookkeeper.view.gui_view import GUIView
 # cat_repo = MemoryRepository[Category]()
 # exp_repo = MemoryRepository[Expense]()
 
-os.remove('bookkeeper.db')
+if os.path.exists('bookkeeper.db'):
+    os.remove('bookkeeper.db')
 cat_repo = SqliteRepository[Category](Category, db_name='bookkeeper')
 exp_repo = SqliteRepository[Expense](Expense, db_name='bookkeeper')
 budget_repo = SqliteRepository[Budget](Budget, db_name='bookkeeper')
