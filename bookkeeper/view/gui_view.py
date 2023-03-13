@@ -22,9 +22,9 @@ class EditCategoryDialog(QtWidgets.QDialog):
         buttons = QtWidgets.QDialogButtonBox.StandardButton.Ok\
                  | QtWidgets.QDialogButtonBox.StandardButton.Cancel
 
-        self.buttonBox = QtWidgets.QDialogButtonBox(buttons)
-        self.buttonBox.accepted.connect(self.accept)
-        self.buttonBox.rejected.connect(self.reject)
+        self.button_box = QtWidgets.QDialogButtonBox(buttons)
+        self.button_box.accepted.connect(self.accept)
+        self.button_box.rejected.connect(self.reject)
 
         self.layout = QtWidgets.QVBoxLayout()
         # message = QtWidgets.QLabel("Something happened, is that OK?")
@@ -45,7 +45,7 @@ class EditCategoryDialog(QtWidgets.QDialog):
         self.layout.addLayout(name_layout)
         self.layout.addLayout(parent_layout)
         # self.layout.addWidget(message)
-        self.layout.addWidget(self.buttonBox)
+        self.layout.addWidget(self.button_box)
         self.setLayout(self.layout)
 
         self._res_obj = None
@@ -86,9 +86,9 @@ class ExpenseDialog(QtWidgets.QDialog):
         buttons = QtWidgets.QDialogButtonBox.StandardButton.Ok \
                   | QtWidgets.QDialogButtonBox.StandardButton.Cancel
 
-        self.buttonBox = QtWidgets.QDialogButtonBox(buttons)
-        self.buttonBox.accepted.connect(self.accept)
-        self.buttonBox.rejected.connect(self.reject)
+        self.button_box = QtWidgets.QDialogButtonBox(buttons)
+        self.button_box.accepted.connect(self.accept)
+        self.button_box.rejected.connect(self.reject)
 
         self.layout = QtWidgets.QVBoxLayout()
         # message = QtWidgets.QLabel("Something happened, is that OK?")
@@ -116,7 +116,7 @@ class ExpenseDialog(QtWidgets.QDialog):
         self.layout.addLayout(cat_layout)
         self.layout.addLayout(comment_layout)
         # self.layout.addWidget(message)
-        self.layout.addWidget(self.buttonBox)
+        self.layout.addWidget(self.button_box)
         self.setLayout(self.layout)
 
         self._res_obj = None
@@ -159,39 +159,14 @@ class GUIView:
         recent_expenses_label = QtWidgets.QLabel('Последние расходы')
 
         self._expenses_table = QtWidgets.QTableWidget(4, 20)
-        self._expenses_table.setColumnCount(4)
-        self._expenses_table.setRowCount(0)
-        self._expenses_table.setHorizontalHeaderLabels(
-            "Дата Сумма Категория Комментарий".split())
-        self._header = self._expenses_table.horizontalHeader()
-        self._header.setSectionResizeMode(
-            0, QtWidgets.QHeaderView.ResizeMode.ResizeToContents)
-        self._header.setSectionResizeMode(
-            1, QtWidgets.QHeaderView.ResizeMode.ResizeToContents)
-        self._header.setSectionResizeMode(
-            2, QtWidgets.QHeaderView.ResizeMode.ResizeToContents)
-        self._header.setSectionResizeMode(
-            3, QtWidgets.QHeaderView.ResizeMode.Stretch)
-
-        for exp in self._presenter.get_all_expenses():
-            self.add_to_expenses_table(exp)
+        self.init_expense_table()
 
         # self._expenses_table.setFlags(self._expenses_table.fl() & ~QtWidgets.QTableWidget.ItemIsEditable);
 
         self._budget_label = QtWidgets.QLabel('Бюджет')
 
         self._budget_table = QtWidgets.QTableWidget(3, 0)
-        self._budget_table.setColumnCount(3)
-        self._budget_table.setRowCount(0)
-        self._budget_table.setHorizontalHeaderLabels(
-            "Срок Сумма Бюджет".split())
-        self._header = self._budget_table.horizontalHeader()
-        self._header.setSectionResizeMode(
-            0, QtWidgets.QHeaderView.ResizeMode.ResizeToContents)
-        self._header.setSectionResizeMode(
-            1, QtWidgets.QHeaderView.ResizeMode.ResizeToContents)
-        self._header.setSectionResizeMode(
-            2, QtWidgets.QHeaderView.ResizeMode.Stretch)
+        self.init_budget_table()
 
         self._hor_layout1 = QtWidgets.QHBoxLayout()
         self._sum_label = QtWidgets.QLabel('Сумма')
@@ -208,13 +183,13 @@ class GUIView:
         self._edit_button.clicked.connect(self.edit_category)
         self._add_cat_button = QtWidgets.QPushButton('Добавить')
         self._add_cat_button.clicked.connect(self.add_category)
-        self._del_cat_button = QtWidgets.QPushButton('Удалить')
+        # self._del_cat_button = QtWidgets.QPushButton('Удалить')
 
         self._hor_layout2.addWidget(self._cat_label)
         self._hor_layout2.addWidget(self._cat_combo_box)
         self._hor_layout2.addWidget(self._edit_button)
         self._hor_layout2.addWidget(self._add_cat_button)
-        self._hor_layout2.addWidget(self._del_cat_button)
+        # self._hor_layout2.addWidget(self._del_cat_button)
 
         self._add_exp_button = QtWidgets.QPushButton('Добавить')
         self._add_exp_button.clicked.connect(self.add_expense)
@@ -247,6 +222,37 @@ class GUIView:
         self._window.show()
 
         # dialog = EditCategoryDialog([Category(name='A', parent=2)])
+
+    def init_expense_table(self):
+        self._expenses_table.setColumnCount(4)
+        self._expenses_table.setRowCount(0)
+        self._expenses_table.setHorizontalHeaderLabels(
+            "Дата Сумма Категория Комментарий".split())
+        self._header = self._expenses_table.horizontalHeader()
+        self._header.setSectionResizeMode(
+            0, QtWidgets.QHeaderView.ResizeMode.ResizeToContents)
+        self._header.setSectionResizeMode(
+            1, QtWidgets.QHeaderView.ResizeMode.ResizeToContents)
+        self._header.setSectionResizeMode(
+            2, QtWidgets.QHeaderView.ResizeMode.ResizeToContents)
+        self._header.setSectionResizeMode(
+            3, QtWidgets.QHeaderView.ResizeMode.Stretch)
+
+        for exp in self._presenter.get_all_expenses():
+            self.add_to_expenses_table(exp)
+
+    def init_budget_table(self):
+        self._budget_table.setColumnCount(3)
+        self._budget_table.setRowCount(0)
+        self._budget_table.setHorizontalHeaderLabels(
+            "Срок Сумма Бюджет".split())
+        self._header = self._budget_table.horizontalHeader()
+        self._header.setSectionResizeMode(
+            0, QtWidgets.QHeaderView.ResizeMode.ResizeToContents)
+        self._header.setSectionResizeMode(
+            1, QtWidgets.QHeaderView.ResizeMode.ResizeToContents)
+        self._header.setSectionResizeMode(
+            2, QtWidgets.QHeaderView.ResizeMode.Stretch)
 
     def get_window(self) -> QtWidgets.QWidget:
         """Return window"""
