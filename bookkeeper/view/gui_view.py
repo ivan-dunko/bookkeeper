@@ -3,14 +3,14 @@ Module defines GUI interface
 """
 
 import sys
+from typing import Optional
 from PySide6 import QtWidgets
+from PySide6 import QtCore
 from bookkeeper.presenter import Presenter
 from bookkeeper.models.category import Category
 from bookkeeper.models.expense import Expense
 from bookkeeper.models.budget import Budget
-from PySide6 import QtCore
 from bookkeeper.view.budget_table import BudgetTable
-from typing import Optional
 
 
 class EditCategoryDialog(QtWidgets.QDialog):
@@ -56,6 +56,7 @@ class EditCategoryDialog(QtWidgets.QDialog):
         self._res_obj: Optional[Category] = None
 
     def accept(self) -> None:
+        """OK pressed action"""
         # print('OK')
         new_name = self._name_line.text()
         new_parent = self._parent_combo_box.itemData(
@@ -70,11 +71,13 @@ class EditCategoryDialog(QtWidgets.QDialog):
         self.done(QtWidgets.QDialog.DialogCode.Accepted)
 
     def reject(self) -> None:
+        """Cancel pressed action"""
         print('Reject')
         # return 0
         self.done(QtWidgets.QDialog.DialogCode.Rejected)
 
     def get_res_obj(self) -> Category | None:
+        """Resulting object"""
         return self._res_obj
 
 
@@ -131,6 +134,7 @@ class ExpenseDialog(QtWidgets.QDialog):
         self._res_obj: Optional[Expense] = None
 
     def accept(self) -> None:
+        """OK pressed action"""
         # print('OK')
         new_sum = int(self._sum_line.text())
         new_cat = self._cat_combo_box.itemData(
@@ -146,11 +150,13 @@ class ExpenseDialog(QtWidgets.QDialog):
         self.done(QtWidgets.QDialog.DialogCode.Accepted)
 
     def reject(self) -> None:
+        """Cancel button pressed action"""
         print('Reject')
         # return 0
         self.done(QtWidgets.QDialog.DialogCode.Rejected)
 
     def get_res_obj(self) -> Expense | None:
+        """Returns result object"""
         return self._res_obj
 
 
@@ -171,56 +177,57 @@ class GUIView:
         self._expenses_table = QtWidgets.QTableWidget(4, 20)
         self.init_expense_table()
 
-        self._budget_label = QtWidgets.QLabel('Бюджет')
+        budget_label = QtWidgets.QLabel('Бюджет')
 
-        self._hor_layout1 = QtWidgets.QHBoxLayout()
-        self._sum_label = QtWidgets.QLabel('Сумма')
-        self._sum_edit = QtWidgets.QLineEdit()
-        self._hor_layout1.addWidget(self._sum_label)
-        self._hor_layout1.addWidget(self._sum_edit)
+        hor_layout1 = QtWidgets.QHBoxLayout()
+        sum_label = QtWidgets.QLabel('Сумма')
+        sum_edit = QtWidgets.QLineEdit()
+        hor_layout1.addWidget(sum_label)
+        hor_layout1.addWidget(sum_edit)
 
-        self._hor_layout2 = QtWidgets.QHBoxLayout()
-        self._cat_label = QtWidgets.QLabel('Категория')
+        hor_layout2 = QtWidgets.QHBoxLayout()
+        cat_label = QtWidgets.QLabel('Категория')
         self._cat_combo_box = QtWidgets.QComboBox()
         for cat in self._presenter.get_all_categories():
             self._cat_combo_box.addItem(cat.name, userData=cat)
-        self._edit_button = QtWidgets.QPushButton('Редактировать')
-        self._edit_button.\
+        edit_button = QtWidgets.QPushButton('Редактировать')
+        edit_button.\
             clicked.connect(self.edit_category)  # type: ignore[attr-defined]
-        self._add_cat_button = QtWidgets.QPushButton('Добавить')
-        self._add_cat_button.\
+        add_cat_button = QtWidgets.QPushButton('Добавить')
+        add_cat_button.\
             clicked.connect(self.add_category)  # type: ignore[attr-defined]
         # self._del_cat_button = QtWidgets.QPushButton('Удалить')
 
-        self._hor_layout2.addWidget(self._cat_label)
-        self._hor_layout2.addWidget(self._cat_combo_box)
-        self._hor_layout2.addWidget(self._edit_button)
-        self._hor_layout2.addWidget(self._add_cat_button)
+        hor_layout2.addWidget(cat_label)
+        hor_layout2.addWidget(self._cat_combo_box)
+        hor_layout2.addWidget(edit_button)
+        hor_layout2.addWidget(add_cat_button)
         # self._hor_layout2.addWidget(self._del_cat_button)
 
-        self._add_exp_button = QtWidgets.QPushButton('Добавить')
-        self._add_exp_button.\
+        add_exp_button = QtWidgets.QPushButton('Добавить')
+        add_exp_button.\
             clicked.connect(self.add_expense)  # type: ignore[attr-defined]
 
-        self._vertical_layout = QtWidgets.QVBoxLayout()
-        self._vertical_layout.addWidget(recent_expenses_label)
-        self._vertical_layout.addWidget(self._expenses_table)
-        self._vertical_layout.addWidget(self._budget_label)
+        vertical_layout = QtWidgets.QVBoxLayout()
+        vertical_layout.addWidget(recent_expenses_label)
+        vertical_layout.addWidget(self._expenses_table)
+        vertical_layout.addWidget(budget_label)
         # self._vertical_layout.addWidget(self._budget_table)
         self._budget_table = BudgetTable(0, 3, self._presenter)
         self.init_budget_table()
 
-        self._vertical_layout.addWidget(self._budget_table)
-        self._vertical_layout.addLayout(self._hor_layout1)
-        self._vertical_layout.addLayout(self._hor_layout2)
-        self._vertical_layout.addWidget(self._add_exp_button)
-        self._window.setLayout(self._vertical_layout)
+        vertical_layout.addWidget(self._budget_table)
+        vertical_layout.addLayout(hor_layout1)
+        vertical_layout.addLayout(hor_layout2)
+        vertical_layout.addWidget(add_exp_button)
+        self._window.setLayout(vertical_layout)
 
         self._window.show()
 
         # dialog = EditCategoryDialog([Category(name='A', parent=2)])
 
     def init_expense_table(self) -> None:
+        """inits expense table"""
         self._expenses_table.setColumnCount(4)
         self._expenses_table.setRowCount(0)
         self._expenses_table.setHorizontalHeaderLabels(
@@ -239,6 +246,7 @@ class GUIView:
             self.add_to_expenses_table(exp)
 
     def init_budget_table(self) -> None:
+        """inits budget table"""
         self._budget_table.setColumnCount(3)
         self._budget_table.setRowCount(0)
         self._budget_table.setHorizontalHeaderLabels(
@@ -263,6 +271,7 @@ class GUIView:
         return self._app
 
     def edit_category(self) -> None:
+        """action edits category"""
         cat = self._cat_combo_box.itemData(self._cat_combo_box.currentIndex())
         dialog = EditCategoryDialog(self._presenter.get_all_categories(), cat)
         dialog.show()
@@ -278,6 +287,7 @@ class GUIView:
                 self._cat_combo_box.addItem(cat.name, userData=cat)
 
     def add_category(self) -> None:
+        """action adds category"""
         dialog = EditCategoryDialog(self._presenter.get_all_categories())
         dialog.show()
         dial_res = dialog.exec()
@@ -292,6 +302,7 @@ class GUIView:
                 self._cat_combo_box.addItem(cat.name, userData=cat)
 
     def add_to_expenses_table(self, exp: Expense) -> None:
+        """action adds expense"""
         row = self._expenses_table.rowCount()
         self._expenses_table.insertRow(row)
         item = QtWidgets.QTableWidgetItem(str(exp.expense_date))
@@ -312,6 +323,7 @@ class GUIView:
         self._expenses_table.setItem(row, 3, item)
 
     def add_to_budget_table(self, budget: Budget) -> None:
+        """adds record to budget table"""
         row = self._budget_table.rowCount()
         self._budget_table.insertRow(row)
         item = QtWidgets.QTableWidgetItem(budget.term)
@@ -327,6 +339,7 @@ class GUIView:
         self._budget_table.setItem(row, 2, item)
 
     def add_expense(self) -> None:
+        """adds expense"""
         dialog = ExpenseDialog(self._presenter.get_all_categories())
         dial_res = dialog.exec()
         if dial_res == QtWidgets.QDialog.DialogCode.Accepted:
